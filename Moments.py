@@ -3,35 +3,29 @@ from skimage import io
 from matplotlib import pyplot as plt
 
 
-def MomentsGeometriques(I,pmax,qmax,N):
+def MomentsGeometriques(I,p,q):
 
     [dimX,dimY]=np.shape(I)       # recuperer les dimensions de I
+    res=0
     x=np.arange(0,dimX)
     y=np.arange(0,dimY)
-    M = np.zeros([pmax, qmax])       # init de la matrice des moments
+    # M = np.zeros([N,N])       # init de la matrice des moments
 
 
     Vx=np.vander(x,dimX,True)       #creation d'une matrice vandermonde pour x
     Vy=np.vander(y,dimY,True)
 
+    for i in range (dimX):           #parcourir l'image en x et y
+        for j in range(dimY):
+            if I[i,j]==1 :     # si le pixel egale a 1
+                res+=Vx[i,p]*Vy[j,q]
 
-
-
-    for p in range (pmax):              #parcourir la matrice  des moments en p et q
-         for q in range(qmax):
-             if p+q<N :
-                for x in range (dimX):           #parcourir l'image en x et y
-                     for y in range(dimY):
-                         if I[x,y]==1 :     # si le pixel egale a 1
-                            M[p,q]+=Vx[x,p]*Vy[y,q]
-
-    return M
-def momentsCentresEtNormes(I,pmax,qmax,N):
-    M=MomentsGeometriques(I, pmax, qmax,N)
-    omega=M[0,0]
-    x_bar=M[1,0]/omega
-    y_bar=M[0,1]/omega
-
+    return res
+def MomentsCentresEtNormes(I,p,q):
+    omega=MomentsGeometriques(I,0,0)
+    x_bar=MomentsGeometriques(I,1,0)/omega
+    y_bar=MomentsGeometriques(I,0,1)/omega
+    res=0
     [dimX, dimY] = np.shape(I)
     x = np.arange(0, dimX)
     y = np.arange(0, dimY)
@@ -39,19 +33,19 @@ def momentsCentresEtNormes(I,pmax,qmax,N):
     Vx=np.vander(x-x_bar,dimX,True)
     Vy=np.vander(y-y_bar,dimY,True)
 
+    dem = omega ** ((p + q + 2) / 2)
+    for i in range (dimX):
+        for j in range(dimY):
+            if I[i,j]==1 :
+                res+=Vx[i,p]*Vy[j,q]/dem
 
-    Mcn=np.zeros([pmax,qmax])
+    return res
 
-    for p in range (0,pmax):
-         for q in range(0,qmax):
-             if p+q<N:
-                dem = omega ** ((p + q + 2) / 2)
-                for x in range (0,dimX):
-                     for y in range(0,dimY):
-                         if I[x,y]==1 :
-                            Mcn[p,q]+=Vx[x,p]*Vy[y,q]
-                Mcn[p,q]=Mcn[p,q]/dem
-
-    return Mcn
+def MatMomentsCentresEtNormes(I,N):
+    M=np.zeros([N,N])
+    for p in range (N):
+        for q in range (N-p):
+            M[p,q]=MomentsCentresEtNormes(I,p,q,N)
+    return M
 
 
